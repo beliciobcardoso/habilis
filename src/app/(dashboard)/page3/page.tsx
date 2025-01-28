@@ -2,8 +2,12 @@ import { Card } from "@/components/ui/card"
 import { BarChart3, FileText, Building2 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { auth } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
-export default function Page3() {
+export default async function Page3() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
   return (
     <div className="min-h-screen p-6 md:p-8 max-w-4xl mx-auto">
       {/* Header Section */}

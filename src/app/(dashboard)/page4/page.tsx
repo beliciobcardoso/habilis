@@ -1,6 +1,10 @@
 import Image from "next/image"
+import { auth } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
-export default function Page4() {
+export default async function Page4() {
+    const session = await auth();
+  if (!session?.user) redirect("/login");
     return (
         <div className="min-h-screen p-6 md:p-8 max-w-4xl mx-auto">
             {/* Header Section */}

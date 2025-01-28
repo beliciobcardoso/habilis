@@ -1,48 +1,110 @@
+"use client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import placeholder from "@/"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+  } from "@/components/ui/form"
+  import { Input } from "@/components/ui/input"
 import Image from "next/image"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
+
+const formSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+})
+
+type FormValues = z.infer<typeof formSchema>
 
 export function LoginForm() {
+    
+    const router = useRouter()
+
+    const form = useForm<FormValues>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            email: "",
+            password: "",
+        },
+    })
+
+    function onSubmit(values: FormValues) {
+
+        signIn('credentials', {
+            email: values.email,
+            password: values.password,
+            redirect: false
+          }).then((res) => {
+            if (res && res.error === 'CredentialsSignin') {
+              form.setError("email", { message: "Credenciais Inválidas" })
+            } else if (res && res.status === 200) {
+              router.push('/')
+              form.setError("email", { message: "" })
+            }
+          }).catch((error) => {
+            console.log('error', error)
+          })
+    }
+
     return (
         <div className={cn("flex flex-col gap-6",)} >
             <Card className="overflow-hidden">
                 <CardContent className="grid p-0 md:grid-cols-2">
-                    <form className="p-6 md:p-8">
-                        <div className="flex flex-col gap-6">
+                
+                        <div className="flex flex-col gap-6 p-6 md:p-8 w-full">
                             <div className="flex flex-col items-center text-center">
                                 <h1 className="text-2xl font-bold">Bem-vindo de volta</h1>
                                 <p className="text-balance text-muted-foreground">
                                     Faça login na sua conta Habilis
                                 </p>
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="m@exemplo.com"
-                                    required
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <div className="flex items-center">
-                                    <Label htmlFor="password">Senha</Label>
-                                    <a
-                                        href="#"
-                                        className="ml-auto text-sm underline-offset-2 hover:underline"
-                                    >
-                                        Esqueceu sua senha?
-                                    </a>
-                                </div>
-                                <Input id="password" type="password" required />
-                            </div>
-                            <Button type="submit" className="w-full">
-                                Entrar
-                            </Button>
+
+                            <div className="p-6 md:p-8 w-full">
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full">
+                                 
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="sr-only" >Email</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="email" type="email" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="password"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="sr-only" >Senha</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="password" type="password" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button type="submit" className="w-full">Registrar</Button>
+                                </form>
+                            </Form>
+                        </div>
+
+
+                           
                             <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
                                 <span className="relative z-10 bg-background px-2 text-muted-foreground">
                                     Ou continue com
@@ -81,7 +143,7 @@ export function LoginForm() {
                                 </a>
                             </div>
                         </div>
-                    </form>
+                
                     <div className="relative hidden bg-muted md:block">
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full">
                             <Image
