@@ -17,6 +17,8 @@ model User {
   hashedPassword String
   accounts       Account[]
   sessions       Session[]
+  folders        Folder[]
+  File           File[]
   // Optional for WebAuthn support
   Authenticator  Authenticator[]
 
@@ -65,8 +67,8 @@ model VerificationToken {
 
 // Optional for WebAuthn support
 model Authenticator {
-  id Int @id @default(autoincrement())
-  credentialID         String  @unique
+  id                   Int      @id @default(autoincrement())
+  credentialID         String   @unique
   userId               String
   loginTime            DateTime @default(now())
   ipAddress            String?
@@ -79,7 +81,34 @@ model Authenticator {
   transports           String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
+model Folder {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique // Chave hierárquica única (exemplo: "1", "11", "111")
+  name      String
+  path      String
+  parentKey String? // Chave da pasta pai (null para pastas raiz)
+  userId    String // Relaciona com o id do usuário
+  user      User     @relation(fields: [userId], references: [id])
+  files     File[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Self-relation for subfolders
+  parent     Folder?  @relation("FolderToSubfolder", fields: [parentKey], references: [key], onDelete: Restrict)
+  subfolders Folder[] @relation("FolderToSubfolder")
+}
+
+model File {
+  id        Int      @id @default(autoincrement())
+  fileData  Json // Campo JSON para armazenar os dados do arquivo
+  folderKey String // Relaciona com a key da pasta pai
+  folder    Folder   @relation(fields: [folderKey], references: [key])
+  userId    String // Relaciona com o id do usuário
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {

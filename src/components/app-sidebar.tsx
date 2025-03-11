@@ -20,7 +20,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 export function AppSidebar({ userData, ...props }: AppSidebarProps) {
   return (
-    <Sidebar variant="inset" {...props}>
+    <Sidebar variant="inset" {...props} className="bg-gray-100 border-r-2 border-gray-400">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

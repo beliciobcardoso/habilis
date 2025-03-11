@@ -3,12 +3,11 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { auth } from "@/lib/auth";
 import getUserByEmail from "@/actions/login";
 
-
 export type User = {
 	email: string
 	name: string
-    image: string | null;
-    role: string; 
+	image: string | null;
+	role: string;
 }
 
 export default async function RootLayout({
@@ -25,7 +24,7 @@ export default async function RootLayout({
 	return (
 		<main>
 			<SidebarProvider>
-			{dataUser && <AppSidebar userData={dataUser} />}
+				{dataUser && <AppSidebar userData={dataUser} />}
 				{children}
 			</SidebarProvider>
 		</main>

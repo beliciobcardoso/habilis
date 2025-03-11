@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SessionProvider } from "next-auth/react";
 
 
 export const metadata: Metadata = {
@@ -14,9 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <body>
-        {children}
-      </body>
+      <SessionProvider>
+        <body>
+          {children}
+        </body>
+      </SessionProvider>
     </html>
   );
 }
