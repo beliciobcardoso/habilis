@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { minioClient } from '@/service/objectStore';
 import crypto from 'crypto';
 import {prisma} from '@/lib/db/prisma';
 

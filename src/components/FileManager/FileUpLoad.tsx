@@ -1,16 +1,20 @@
 'use client';
 import React, { useRef, useState, SyntheticEvent } from 'react';
 import { Toast } from 'primereact/toast';
-import { FileUpload, FileUploadHeaderTemplateOptions, FileUploadSelectEvent, FileUploadUploadEvent } from 'primereact/fileupload';
+import { FileUpload, FileUploadHeaderTemplateOptions, FileUploadSelectEvent, FileUploadUploadEvent, FileUploadHandlerEvent } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
 import { Button } from 'primereact/button';
 import { Tooltip } from 'primereact/tooltip';
 import { Tag } from 'primereact/tag';
 import { Image } from 'primereact/image';
 import { ItemTemplateOptions } from 'primereact/fileupload';
-import { FolderType } from '@/lib/types';
+import type { FolderType } from '@/lib/types';
 
-export default function FileUpLoad({ folder }: { folder: FolderType }) {
+type Folder = {
+    folder: FolderType;
+}
+
+export default function FileUpLoad({ folder }: Folder) {
     const toast = useRef<Toast>(null);
     const [totalSize, setTotalSize] = useState(0);
     const fileUploadRef = useRef<FileUpload>(null);
@@ -18,12 +22,12 @@ export default function FileUpLoad({ folder }: { folder: FolderType }) {
     const onTemplateSelect = (e: FileUploadSelectEvent) => {
         let _totalSize = totalSize;
         const files = e.files;
-        
+
         // Using proper indexing for FileList-like objects
         for (let i = 0; i < files.length; i++) {
             _totalSize += files[i].size || 0;
         }
-        
+
         setTotalSize(_totalSize);
     };
 
@@ -61,12 +65,7 @@ export default function FileUpLoad({ folder }: { folder: FolderType }) {
                 : '0 B';
         return (
             <div
-                className={className}
-                style={{
-                    backgroundColor: 'transparent',
-                    display: 'flex',
-                    alignItems: 'center',
-                }}
+                className={`flex ${className}`}
             >
                 {chooseButton}
                 {uploadButton}
@@ -75,9 +74,9 @@ export default function FileUpLoad({ folder }: { folder: FolderType }) {
                     <span>{formatedValue} / 50 MB</span>
                     <ProgressBar
                         value={value}
-                        showValue={false}
-                        style={{ width: '10rem', height: '12px' }}
-                        color={value > 50 ? 'red' : 'var(--primary-color)'}
+                        showValue={true}
+                        style={{ width: '10rem', height: '20px' }}
+                        color={value > 50 ? 'red' : 'blue'}
                     ></ProgressBar>
                 </div>
             </div>
@@ -86,7 +85,7 @@ export default function FileUpLoad({ folder }: { folder: FolderType }) {
 
     const itemTemplate = (file: object, options: ItemTemplateOptions) => {
         const fileObj = file as File;
-        
+
         let url = '';
         switch (fileObj.type) {
             case 'image/jpeg':
@@ -168,7 +167,7 @@ export default function FileUpLoad({ folder }: { folder: FolderType }) {
                     }}
                 ></i>
                 <span
-                    style={{ fontSize: '1.2em', color: 'var(--text-color-secondary)' }}
+                    style={{ fontSize: '1.2em', color: 'yellow' }}
                     className="my-5"
                 >
                     Arraste e solte o arquvo aqui
@@ -180,7 +179,7 @@ export default function FileUpLoad({ folder }: { folder: FolderType }) {
     const chooseOptions = {
         icon: 'pi pi-fw pi-file',
         iconOnly: true,
-        className: 'custom-choose-btn p-button-rounded p-button-outlined',
+        className: '',
     };
     const uploadOptions = {
         icon: 'pi pi-fw pi-cloud-upload',
@@ -195,29 +194,28 @@ export default function FileUpLoad({ folder }: { folder: FolderType }) {
             'custom-cancel-btn p-button-danger p-button-rounded p-button-outlined',
     };
 
-    const customUploader = async (event: any) => {
+    const customUploader = async (event: FileUploadHandlerEvent) => {
         const formData = new FormData();
-        
+
         // Adiciona os arquivos
-        for (let file of event.files) {
-          formData.append('file', file);
+        for (const file of event.files) {
+            formData.append('file', file);
         }
-      
+
         // Adiciona parâmetros extras
         formData.append('userId', '123');
-        formData.append('folderKeyPam', folder.key);
-      
+        formData.append('folderKey', folder?.key || '');
+
         // Faz a requisição manualmente
         const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
+            method: 'POST',
+            body: formData,
         });
-      
-        if (!response.ok) {
-          console.error('Erro no upload');
-        }
-      }
 
+        if (!response.ok) {
+            console.error('Erro no upload');
+        }
+    };
 
     return (
         <div>
@@ -228,20 +226,20 @@ export default function FileUpLoad({ folder }: { folder: FolderType }) {
             <Tooltip target=".custom-cancel-btn" content="Clear" position="bottom" />
 
             <FileUpload
-                ref={fileUploadRef}
                 name="file"
+                ref={fileUploadRef}
                 customUpload
                 uploadHandler={customUploader}
-                multiple={false}
                 accept="image/*,application/pdf,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
                 maxFileSize={50_000_000} // 5_000_000 = 5MB
+                itemTemplate={itemTemplate}
+                emptyTemplate={emptyTemplate}
+                headerTemplate={headerTemplate}
+                multiple={false}
                 onUpload={onTemplateUpload}
                 onSelect={onTemplateSelect}
                 onError={onTemplateClear}
                 onClear={onTemplateClear}
-                headerTemplate={headerTemplate}
-                itemTemplate={itemTemplate}
-                emptyTemplate={emptyTemplate}
                 chooseOptions={chooseOptions}
                 uploadOptions={uploadOptions}
                 cancelOptions={cancelOptions}
