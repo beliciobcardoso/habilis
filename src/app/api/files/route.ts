@@ -175,10 +175,9 @@ export async function GET(request: NextRequest) {
     await new Promise(resolve => setTimeout(resolve, 300));
 
     const searchParams = request.nextUrl.searchParams;
-    const folderId = searchParams.get('folderKey');
-    console.log('folderId:', folderId);
+    const folderKey = searchParams.get('folderKey');
 
-    if (!folderId) {
+    if (!folderKey) {
       return NextResponse.json(
         { error: 'Folder ID is required', success: false },
         { status: 400 }
@@ -186,39 +185,37 @@ export async function GET(request: NextRequest) {
     }
 
     // Verificar se a pasta existe
-    // if (!mockFiles[folderId] && folderId !== 'root') {
+    // if (!mockFiles[folderKey] && folderKey !== 'root') {
     //   return NextResponse.json(
     //     { error: 'Folder not found', success: false },
     //     { status: 404 }
     //   );
     // }
 
-    // const files = mockFiles[folderId] || [];
+    // const files = mockFiles[folderKey] || [];
 
     const fileRecords = await prisma.file.findMany({
       where: {
-        folderKey: folderId
+        folderKey
       }
     });
+
+    console.log('Registros de arquivos encontrados:', fileRecords);
+  
 
     // Extrair os dados do campo fileData de cada registro
     // Se fileData for um array, use diretamente; se for um objeto, converta para array
     const filesData = fileRecords.map(record => {
+      // console.log('Tipo de fileData:', record.fileData);
       if (record.fileData) {
         // Se for uma string, tente fazer o parse
-        if (typeof record.fileData === 'string') {
-          try {
-            return JSON.parse(record.fileData);
-          } catch (e) {
-            console.error('Erro ao fazer parse de fileData:', e);
-            return [];
-          }
-        }
-        // Se for um objeto com uma propriedade que corresponde ao folderId
-        else if (typeof record.fileData === 'object' && record.fileData && !Array.isArray(record.fileData)) {
+        // console.log('Tipo de fileData:', typeof record.fileData);
+       
+        // Se for um objeto com uma propriedade que corresponde ao folderKey
+        if (typeof record.fileData === 'object' && record.fileData && !Array.isArray(record.fileData)) {
           // Conversão segura para satisfazer o TypeScript
           const fileDataObject = record.fileData as Record<string, FileType[]>;
-          return fileDataObject[folderId] || [];
+          return fileDataObject[folderKey] || [];
         }
         // Se já for um array
         else if (Array.isArray(record.fileData)) {
@@ -261,7 +258,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Arquivo recebido:', file);
     console.log('Chave da pasta:', folderKey);
-    
+
     // Verifica se o arquivo foi enviado
     if (!file) {
       return NextResponse.json(
@@ -269,7 +266,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // Verifica se a pasta foi especificada
     if (!folderKey) {
       return NextResponse.json(
@@ -277,19 +274,19 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    
+
     // Verifica se a pasta existe
     const folder = await prisma.folder.findUnique({
       where: { key: folderKey }
     });
-    
+
     if (!folder) {
       return NextResponse.json(
         { error: 'Pasta não encontrada', success: false },
         { status: 404 }
       );
     }
-    
+
     // Cria os metadados do arquivo
     const fileType: FileType = {
       id: `${Date.now()}_${file.name.replace(/\s/g, '_')}`,
@@ -299,7 +296,7 @@ export async function POST(request: NextRequest) {
       lastModified: new Date(),
       path: `${folder.path}/${file.name}`,
     };
-    
+
     // Salva os metadados e o conteúdo do arquivo no banco de dados
     // const fileRecord = await prisma.file.create({
     //   data: {
@@ -311,7 +308,7 @@ export async function POST(request: NextRequest) {
     //     userId: userId,
     //   }
     // });
-    
+
     return NextResponse.json({
       success: true,
       message: 'Arquivo enviado com sucesso',

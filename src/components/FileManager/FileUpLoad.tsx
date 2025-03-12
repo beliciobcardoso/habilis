@@ -8,8 +8,9 @@ import { Tooltip } from 'primereact/tooltip';
 import { Tag } from 'primereact/tag';
 import { Image } from 'primereact/image';
 import { ItemTemplateOptions } from 'primereact/fileupload';
+import { FolderType } from '@/lib/types';
 
-export default function TemplateDemo() {
+export default function FileUpLoad({ folder }: { folder: FolderType }) {
     const toast = useRef<Toast>(null);
     const [totalSize, setTotalSize] = useState(0);
     const fileUploadRef = useRef<FileUpload>(null);
@@ -194,6 +195,30 @@ export default function TemplateDemo() {
             'custom-cancel-btn p-button-danger p-button-rounded p-button-outlined',
     };
 
+    const customUploader = async (event: any) => {
+        const formData = new FormData();
+        
+        // Adiciona os arquivos
+        for (let file of event.files) {
+          formData.append('file', file);
+        }
+      
+        // Adiciona parâmetros extras
+        formData.append('userId', '123');
+        formData.append('folderKeyPam', folder.key);
+      
+        // Faz a requisição manualmente
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+      
+        if (!response.ok) {
+          console.error('Erro no upload');
+        }
+      }
+
+
     return (
         <div>
             <Toast ref={toast}></Toast>
@@ -204,8 +229,9 @@ export default function TemplateDemo() {
 
             <FileUpload
                 ref={fileUploadRef}
-                name="demo[]"
-                url="/api/upload"
+                name="file"
+                customUpload
+                uploadHandler={customUploader}
                 multiple={false}
                 accept="image/*,application/pdf,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
                 maxFileSize={50_000_000} // 5_000_000 = 5MB

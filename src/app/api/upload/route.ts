@@ -6,28 +6,29 @@ import {prisma} from '@/lib/db/prisma';
 const BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || 'files-manager';
 
 // Verifica se o bucket existe, caso contrário, cria um novo
-async function ensureBucketExists() {
-  try {
-    const exists = await minioClient.bucketExists(BUCKET_NAME);
-    if (!exists) {
-      await minioClient.makeBucket(BUCKET_NAME, 'us-east-1');
-      console.log(`Bucket '${BUCKET_NAME}' criado com sucesso`);
-    }
-  } catch (error) {
-    console.error('Erro ao verificar/criar bucket:', error);
-    throw error;
-  }
-}
+// async function ensureBucketExists() {
+//   try {
+//     const exists = await minioClient.bucketExists(BUCKET_NAME);
+//     if (!exists) {
+//       await minioClient.makeBucket(BUCKET_NAME, 'us-east-1');
+//       console.log(`Bucket '${BUCKET_NAME}' criado com sucesso`);
+//     }
+//   } catch (error) {
+//     console.error('Erro ao verificar/criar bucket:', error);
+//     throw error;
+//   }
+// }
 
 export async function POST(request: NextRequest) {
   try {
     // Verifica se o bucket existe
-    await ensureBucketExists();
+    // await ensureBucketExists();
 
     // Extrai os dados do formulário
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const folderKey = formData.get('folderKey') as string;
+    const folderKey = formData.get('folderKeyPam') as string;
+    console.log('FolderKe RX', folderKey);
 
     if (!file) {
       return NextResponse.json(
@@ -65,14 +66,18 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    console.log('buffer', buffer);
+
     // Faz o upload do arquivo para o Minio
     const objectKey = `${folder.path.replace(/^\//, '')}/${file.name}`.replace(/\\/g, '/').replace(/\/\//g, '/');
+
+    console.log('objectKey', objectKey);
     
-    await minioClient.putObject(
-      BUCKET_NAME,
-      objectKey,
-      buffer,
-    );
+    // await minioClient.putObject(
+    //   BUCKET_NAME,
+    //   objectKey,
+    //   buffer,
+    // );
 
  
     return NextResponse.json({
@@ -97,7 +102,7 @@ export async function POST(request: NextRequest) {
 // Rota para verificar o status do servidor de armazenamento
 export async function GET() {
   try {
-    await ensureBucketExists();
+    // await ensureBucketExists();
     return NextResponse.json({
       success: true,
       message: 'Servidor de armazenamento está operacional',

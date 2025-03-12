@@ -240,12 +240,13 @@ export default function FolderView({ folder, onFileSelect }: FolderViewProps) {
 
       <Dialog
         header="Upload de Arquivo"
+        className="bg-slate-800/90 p-4 text-gray-200 rounded-lg"
         visible={isDialogVisible}
         style={{ width: '800px', maxWidth: '98vw' }}
         modal
         onHide={() => setIsDialogVisible(false)}
       >
-        <FileUpLoad />
+        <FileUpLoad folder={folder} />
       </Dialog>
     </div>
   );

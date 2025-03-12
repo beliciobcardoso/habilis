@@ -32,7 +32,7 @@ export function MenuGrid() {
         title="GESTÃO DE CUSTOS"
       />
       <MenuItem 
-        href={'/'} 
+        href={'/page4'} 
         src={'/Captura de tela de 2025-01-26 09-30-52.png'} 
         title="TRANSAÇÕES"
       />
