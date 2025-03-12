@@ -2,11 +2,21 @@ import { NextResponse } from 'next/server';
 import type { FolderType } from '@/lib/types';
 import { prisma } from '@/lib/db/prisma';
 
+export type Folder = {
+  id: number;
+  key: string;
+  name: string;
+  path: string;
+  parentKey: string | null;
+  userId: string;
+};
+
+
 // Função recursiva para construir a estrutura aninhada de pastas
-function buildFolderHierarchy(folders: any[], parentKey: string | null = null): FolderType[] {
+function buildFolderHierarchy(folders: Folder[], parentKey: string | null = null) {
   const result: FolderType[] = [];
 
-  const children = folders.filter(folder => folder.parentKey === parentKey);
+  const children = folders.filter((folder: { parentKey: string | null; }) => folder.parentKey === parentKey);
 
   for (const child of children) {
     const folderWithSubfolders: FolderType = {
@@ -14,7 +24,7 @@ function buildFolderHierarchy(folders: any[], parentKey: string | null = null): 
       key: child.key,
       name: child.name,
       path: child.path,
-      parentKey: child.parentKey,
+      parentKey: child.parentKey as string,
       userId: child.userId,
       subfolders: buildFolderHierarchy(folders, child.key)
     };

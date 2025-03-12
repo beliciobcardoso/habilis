@@ -106,8 +106,8 @@ export default function Page4() {
                 <div className="w-full max-w-[2500px]">
                     <header className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-3xl font-bold mb-1">Gerenciador de Arquivos</h1>
-                            <p className="text-gray-400">Gerencie seus documentos e imagens com facilidade</p>
+                            <h1 className="text-3xl font-bold mb-1">Gerenciador de Transações</h1>
+                            <p className="text-gray-400">Gerencie dados de trasanções finaceiras, comprovantes e outros arquivos associados.</p>
                         </div>
                     </header>
                     <Splitter className="border border-slate-700/50 bg-gray-500 p-0 m-0" style={{ height: 'calc(100vh - 100px)', width: '100%' }}>

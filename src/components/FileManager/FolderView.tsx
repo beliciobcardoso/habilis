@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
@@ -22,15 +22,7 @@ export default function FolderView({ folder, onFileSelect }: FolderViewProps) {
   const toast = useRef<Toast>(null);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
 
-  useEffect(() => {
-    if (folder) {
-      fetchFiles();
-    } else {
-      setFiles([]);
-    }
-  }, [folder]);
-
-  const fetchFiles = async () => {
+  const fetchFiles = useCallback(async () => {
     if (!folder) return;
 
     setLoading(true);
@@ -56,12 +48,12 @@ export default function FolderView({ folder, onFileSelect }: FolderViewProps) {
       }
 
       // Garantir que cada item tenha as propriedades necessárias
-      const validFiles = filesData.filter((file: any) =>
+      const validFiles = filesData.filter((file: Partial<FileType>) =>
         file && typeof file === 'object' && file.name && file.type
       );
 
       console.log('Arquivos válidos:', validFiles);
-      setFiles(validFiles);
+      setFiles(validFiles as FileType[]);
     } catch (error) {
       console.error('Erro ao carregar arquivos:', error);
       toast.current?.show({
@@ -73,47 +65,15 @@ export default function FolderView({ folder, onFileSelect }: FolderViewProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [folder]);
 
-  // const handleUpload = async (event: any) => {
-  //   if (!folder) return;
-
-  //   const formData = new FormData();
-  //   formData.append('folderKey', folder.key);
-
-  //   console.log('Arquivos enviados:', event.files);
-
-  //   for (let file of event.files) {
-  //     formData.append('files', file);
-  //   }
-
-  //   try {
-  //     const response = await fetch('/api/files', {
-  //       method: 'POST',
-  //       body: formData
-  //     });
-
-  //     if (!response.ok) throw new Error('Falha no upload');
-
-  //     toast.current?.show({ 
-  //       severity: 'success', 
-  //       summary: 'Sucesso', 
-  //       detail: 'Arquivos enviados com sucesso',
-  //       life: 3000 
-  //     });
-
-  //     // Recarrega a lista de arquivos
-  //     fetchFiles();
-  //   } catch (error) {
-  //     console.error('Erro no upload:', error);
-  //     toast.current?.show({ 
-  //       severity: 'error', 
-  //       summary: 'Erro', 
-  //       detail: 'Falha ao enviar arquivos',
-  //       life: 3000 
-  //     });
-  //   }
-  // };
+  useEffect(() => {
+    if (folder) {
+      fetchFiles();
+    } else {
+      setFiles([]);
+    }
+  }, [folder, fetchFiles]);
 
   const dateTemplate = (rowData: FileType) => {
     return new Date(rowData.lastModified).toLocaleString();
@@ -159,7 +119,7 @@ export default function FolderView({ folder, onFileSelect }: FolderViewProps) {
       if (fileType.startsWith('image/')) return 'info';
       if (fileType === 'application/pdf') return 'danger';
       if (fileType.includes('spreadsheet')) return 'success';
-      if (fileType.includes('document')) return 'primary';
+      if (fileType.includes('document')) return 'contrast';
       if (fileType.includes('presentation')) return 'warning';
       return 'secondary';
     };
@@ -167,7 +127,7 @@ export default function FolderView({ folder, onFileSelect }: FolderViewProps) {
     return (
       <Badge
         value={getTypeLabel(rowData.type)}
-        severity={getBadgeSeverity(rowData.type) as any}
+        severity={getBadgeSeverity(rowData.type)}
         className="text-xs"
       />
     );

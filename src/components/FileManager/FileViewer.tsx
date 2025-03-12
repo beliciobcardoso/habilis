@@ -1,10 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from 'primereact/button';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Card } from 'primereact/card';
 import { isImageFile, isPdfFile, isTextFile } from '@/lib/utils';
 import type { FileType } from '@/lib/types';
+import { Image } from 'primereact/image';
 
 interface FileViewerProps {
   file: FileType;
@@ -16,14 +17,7 @@ export default function FileViewer({ file, onBack }: FileViewerProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (file) {
-      console.log("Carregando conteúdo do arquivo:", file);
-      loadFileContent();
-    }
-  }, [file]);
-
-  const loadFileContent = async () => {
+  const loadFileContent = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -49,7 +43,14 @@ export default function FileViewer({ file, onBack }: FileViewerProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [file.id, file.type]);
+
+  useEffect(() => {
+    if (file) {
+      console.log("Carregando conteúdo do arquivo:", file);
+      loadFileContent();
+    }
+  }, [file, loadFileContent]);
 
   const renderFileContent = () => {
     if (loading) {
@@ -68,7 +69,7 @@ export default function FileViewer({ file, onBack }: FileViewerProps) {
     if (isImageFile(file.type)) {
       return (
         <div className="flex justify-center p-4">
-          <img 
+          <Image 
             src={`/api/files/content?fileId=${file.id}`} 
             alt={file.name} 
             className="max-w-full max-h-[70vh] object-contain"

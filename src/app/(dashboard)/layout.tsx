@@ -16,7 +16,7 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }>) {
 	const session = await auth()
-	const user = session?.user as User
+	const user = session?.user as unknown as User
 	let dataUser: User | null = null
 	if (session) {
 		dataUser = await getUserByEmail(user.email)

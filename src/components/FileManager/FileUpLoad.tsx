@@ -1,35 +1,36 @@
 'use client';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, SyntheticEvent } from 'react';
 import { Toast } from 'primereact/toast';
-import { FileUpload } from 'primereact/fileupload';
+import { FileUpload, FileUploadHeaderTemplateOptions, FileUploadSelectEvent, FileUploadUploadEvent } from 'primereact/fileupload';
 import { ProgressBar } from 'primereact/progressbar';
 import { Button } from 'primereact/button';
 import { Tooltip } from 'primereact/tooltip';
 import { Tag } from 'primereact/tag';
+import { Image } from 'primereact/image';
+import { ItemTemplateOptions } from 'primereact/fileupload';
 
 export default function TemplateDemo() {
     const toast = useRef<Toast>(null);
     const [totalSize, setTotalSize] = useState(0);
     const fileUploadRef = useRef<FileUpload>(null);
 
-    const onTemplateSelect = (e: { files: any; }) => {
+    const onTemplateSelect = (e: FileUploadSelectEvent) => {
         let _totalSize = totalSize;
-        let files = e.files;
-
-        Object.keys(files).forEach((key) => {
-            _totalSize += files[key].size || 0;
-        });
-
+        const files = e.files;
+        
+        // Using proper indexing for FileList-like objects
+        for (let i = 0; i < files.length; i++) {
+            _totalSize += files[i].size || 0;
+        }
+        
         setTotalSize(_totalSize);
     };
 
-    const onTemplateUpload = (e: { files: any[]; }) => {
+    const onTemplateUpload = (e: FileUploadUploadEvent) => {
         let _totalSize = 0;
-
-        e.files.forEach((file: { size: number; }) => {
+        e.files.forEach((file: File) => {
             _totalSize += file.size || 0;
         });
-
         setTotalSize(_totalSize);
         toast.current?.show({
             severity: 'info',
@@ -38,23 +39,25 @@ export default function TemplateDemo() {
         });
     };
 
-    const onTemplateRemove = (file: { size: number; }, callback: () => void) => {
+    // Updated callback signature to match PrimeReact's expectation
+    const onTemplateRemove = (file: File, callback: (event: SyntheticEvent) => void) => {
         setTotalSize(totalSize - file.size);
-        callback();
+        // Pass a synthetic event or create a mock one if needed
+        const mockEvent = new Event('mock') as unknown as SyntheticEvent;
+        callback(mockEvent);
     };
 
     const onTemplateClear = () => {
         setTotalSize(0);
     };
 
-    const headerTemplate = (options: { className: any; chooseButton: any; uploadButton: any; cancelButton: any; }) => {
+    const headerTemplate = (options: FileUploadHeaderTemplateOptions) => {
         const { className, chooseButton, uploadButton, cancelButton } = options;
         const value = totalSize / 1024 / 1024;
         const formatedValue =
             fileUploadRef && fileUploadRef.current
                 ? fileUploadRef.current.formatSize(totalSize)
                 : '0 B';
-
         return (
             <div
                 className={className}
@@ -80,11 +83,10 @@ export default function TemplateDemo() {
         );
     };
 
-    const itemTemplate = (file: object, options: any) => {
+    const itemTemplate = (file: object, options: ItemTemplateOptions) => {
         const fileObj = file as File;
         
         let url = '';
-
         switch (fileObj.type) {
             case 'image/jpeg':
             case 'image/png':
@@ -119,16 +121,13 @@ export default function TemplateDemo() {
                 url = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/svg+xml" viewBox="0 0 24 24" fill="gray"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/></svg>';
                 break;
         }
-
-
         return (
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 w-9/12" >
-                    <img
+                    <Image
                         alt={fileObj.name}
                         role="presentation"
                         src={url}
-                        width={100}
                     />
                     <span className="flex px-2 items-center w-full justify-between">
                         {fileObj.name}
@@ -145,7 +144,10 @@ export default function TemplateDemo() {
                         type="button"
                         icon="pi pi-times"
                         className="p-button-outlined p-button-rounded p-button-danger ml-auto"
-                        onClick={() => onTemplateRemove(fileObj, options.onRemove)}
+                        onClick={(e) => {
+                            // Use the actual event from the button click
+                            onTemplateRemove(fileObj, () => options.onRemove(e));
+                        }}
                     />
                 </div>
             </div>
