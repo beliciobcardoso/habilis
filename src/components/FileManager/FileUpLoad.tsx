@@ -125,6 +125,7 @@ export default function FileUpLoad({ folder }: Folder) {
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 w-9/12" >
                     <Image
+                        width='100'
                         alt={fileObj.name}
                         role="presentation"
                         src={url}
@@ -137,8 +138,7 @@ export default function FileUpLoad({ folder }: Folder) {
                 <div className='flex h-20 items-center gap-3'>
                     <Tag
                         value={options.formatSize}
-                        severity="warning"
-                        className="px-3 py-4"
+                        className="px-3 py-4 bg-amber-400 text-black font-bold rounded-md"
                     />
                     <Button
                         type="button"
