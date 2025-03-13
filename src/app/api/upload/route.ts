@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import {prisma} from '@/lib/db/prisma';
+import { prisma } from '@/lib/db/prisma';
+import { FileType } from '@/lib/types';
 
 const BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || 'files-manager';
 
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     // Extrai os dados do formulário
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const folderKey = formData.get('folderKeyPam') as string;
-    console.log('FolderKe RX', folderKey);
+    const folderKey = formData.get('folderKey') as string;
+    const id = formData.get('folderId') as string
 
     if (!file) {
       return NextResponse.json(
@@ -55,12 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Gera um ID único para o arquivo
-    const fileId = crypto.randomUUID();
-    
-    // Cria uma chave para o arquivo no formato "folderKey_fileId"
-    const fileKey = `${folderKey}_${fileId}`;
-    
+
     // Converte o arquivo para um buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -68,22 +63,62 @@ export async function POST(request: NextRequest) {
     console.log('buffer', buffer);
 
     // Faz o upload do arquivo para o Minio
-    const objectKey = `${folder.path.replace(/^\//, '')}/${file.name}`.replace(/\\/g, '/').replace(/\/\//g, '/');
+    const objectKey = `${folder.path.trim()}/${file.name}`.replace(/\\/g, '/').replace(/\/+/g, '/');
 
     console.log('objectKey', objectKey);
-    
+
     // await minioClient.putObject(
     //   BUCKET_NAME,
     //   objectKey,
     //   buffer,
     // );
 
- 
+    // Buscar a lista de arquivo da pasta no fileData
+    const fileRecords = await prisma.file.findMany({
+      where: {
+        folderKey
+      }
+    });
+
+    console.log('folderData', fileRecords);
+
+    const filesData = fileRecords.map((record) => {
+      const fileDataObject = record.fileData as Record<string, FileType[]>;
+      return fileDataObject[folderKey] || [];
+    }).flat();
+
+    console.log('filesData', filesData);
+
+    // numero incremental a partir do tamanha do array
+    const fileIndex = filesData.length + 1;
+    fileIndex.toString()
+    const fileId = folderKey + fileIndex;
+
+    // Atualizar o fileData da pasta
+    const response = await prisma.file.update({
+      where: { id: parseInt(id) },
+      data: {
+        fileData: {
+          [folderKey]: [...filesData, {
+            key: fileId,
+            name: file.name,
+            path: objectKey,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified,
+          }]
+        }
+      }
+    });
+
+    console.log('response', response);
+
+
     return NextResponse.json({
       success: true,
       message: 'Arquivo enviado com sucesso',
       file: {
-        key: fileKey,
+        key: fileId,
         name: file.name,
         size: file.size,
         type: file.type,

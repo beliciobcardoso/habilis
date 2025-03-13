@@ -58,14 +58,15 @@ export default function FileUpLoad({ folder }: Folder) {
 
     const headerTemplate = (options: FileUploadHeaderTemplateOptions) => {
         const { className, chooseButton, uploadButton, cancelButton } = options;
-        const value = totalSize / 1024 / 1024;
+        const value = totalSize / 55_000_0;
+        console.log('value', value);
         const formatedValue =
             fileUploadRef && fileUploadRef.current
                 ? fileUploadRef.current.formatSize(totalSize)
                 : '0 B';
         return (
             <div
-                className={`flex ${className}`}
+                className={`flex gap-4 ${className}`}
             >
                 {chooseButton}
                 {uploadButton}
@@ -75,8 +76,8 @@ export default function FileUpLoad({ folder }: Folder) {
                     <ProgressBar
                         value={value}
                         showValue={true}
-                        style={{ width: '10rem', height: '20px' }}
-                        color={value > 50 ? 'red' : 'blue'}
+                        style={{ width: '10rem', height: '20px', fontSize: '0.8rem', background: '#FFF', borderRadius: '8px' }}
+                        color={value > (1024*50) ? 'red' : 'green'}
                     ></ProgressBar>
                 </div>
             </div>
@@ -121,6 +122,7 @@ export default function FileUpLoad({ folder }: Folder) {
                 url = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/svg+xml" viewBox="0 0 24 24" fill="gray"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/></svg>';
                 break;
         }
+
         return (
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 w-9/12" >
@@ -195,7 +197,7 @@ export default function FileUpLoad({ folder }: Folder) {
     };
 
     const customUploader = async (event: FileUploadHandlerEvent) => {
-        const formData = new FormData();
+        const formData = new FormData()
 
         // Adiciona os arquivos
         for (const file of event.files) {
@@ -204,7 +206,8 @@ export default function FileUpLoad({ folder }: Folder) {
 
         // Adiciona parâmetros extras
         formData.append('userId', '123');
-        formData.append('folderKey', folder?.key || '');
+        formData.append('folderKey', folder?.key);
+        formData.append('folderId', folder?.id.toString());
 
         // Faz a requisição manualmente
         const response = await fetch('/api/upload', {
