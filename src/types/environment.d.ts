@@ -7,7 +7,7 @@ declare global {
         DATABASE_URL: string
         STORAGE_ENDPOINT: string
         STORAGE_PORT: number
-        STORAGE_BUCKET: string
+        STORAGE_BUCKET_NAME: string
         STORAGE_REGION: string
         STORAGE_PATH: string
         STORAGE_ACCESS_KEY_ID: string

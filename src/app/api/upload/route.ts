@@ -1,27 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
 import { FileType } from '@/lib/types';
+import { minioClient } from '@/service/objectStore';
+import { CreateBucketCommand, HeadBucketCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
 const BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || 'files-manager';
 
 // Verifica se o bucket existe, caso contrário, cria um novo
-// async function ensureBucketExists() {
-//   try {
-//     const exists = await minioClient.bucketExists(BUCKET_NAME);
-//     if (!exists) {
-//       await minioClient.makeBucket(BUCKET_NAME, 'us-east-1');
-//       console.log(`Bucket '${BUCKET_NAME}' criado com sucesso`);
-//     }
-//   } catch (error) {
-//     console.error('Erro ao verificar/criar bucket:', error);
-//     throw error;
-//   }
-// }
+export async function ensureBucketExists() {
+    try {
+        const exists = await minioClient.send(new HeadBucketCommand({ Bucket: BUCKET_NAME }));
+        console.log(`Bucket '${BUCKET_NAME}' já existe`);
+        if (!exists) {
+            await minioClient.send(new CreateBucketCommand({ Bucket: BUCKET_NAME }));
+            console.log(`Bucket '${BUCKET_NAME}' criado com sucesso`);
+        }
+    } catch (error) {
+        console.error('Erro ao verificar/criar bucket:', error);
+        throw error;
+    }
+}
+
 
 export async function POST(request: NextRequest) {
   try {
     // Verifica se o bucket existe
-    // await ensureBucketExists();
+    await ensureBucketExists();
 
     // Extrai os dados do formulário
     const formData = await request.formData();
@@ -67,11 +71,13 @@ export async function POST(request: NextRequest) {
 
     console.log('objectKey', objectKey);
 
-    // await minioClient.putObject(
-    //   BUCKET_NAME,
-    //   objectKey,
-    //   buffer,
-    // );
+    // Upload do arquivo para o MinIO usando AWS SDK v3
+    await minioClient.send(new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: objectKey,
+      Body: buffer,
+      ContentType: file.type
+    }));
 
     // Buscar a lista de arquivo da pasta no fileData
     const fileRecords = await prisma.file.findMany({
@@ -136,7 +142,7 @@ export async function POST(request: NextRequest) {
 // Rota para verificar o status do servidor de armazenamento
 export async function GET() {
   try {
-    // await ensureBucketExists();
+    await ensureBucketExists();
     return NextResponse.json({
       success: true,
       message: 'Servidor de armazenamento está operacional',
